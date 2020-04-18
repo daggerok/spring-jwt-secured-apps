@@ -39,6 +39,7 @@
   <modules>
     <module>step-0-no-security</module>
     <module>step-1-spring-security-defaults</module>
+    <module>step-2-simple-spring-configurer</module>
   </modules>
 
   <properties>
