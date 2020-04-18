@@ -2,5 +2,15 @@ GET http://localhost:8080/
 
 ###
 GET http://localhost:8080/api/hello
+Content-Type: application/json
+
+###
+POST http://localhost:8080/api/auth
+Content-Type: application/json
+
+{
+  "username": "dag",
+  "password": "dag"
+}
 
 ###

@@ -2,14 +2,14 @@
 From zero to JWT hero...
 
 ## Table of Content
-* [Step 0: No security](#step-0-no-security)
-* [Step 1: Spring Security defaults](#step-1-spring-security-defaults)
-* [Step 2: Using custom WebSecurityConfigurerAdapter, UserDetailsService](#step-2-simple-spring-configurer)
-* [TBD](#to-be-continue)
+* [Step 0: No security](#step-0)
+* [Step 1: Spring Security defaults](#step-1)
+* [Step 2: Using custom WebSecurityConfigurerAdapter, UserDetailsService](#step-2)
+* [Step 3: Simple JWT integration](#step-3)
 * [Maven: versioning and releasing](#versioning-and-releasing)
 * [Resources and used links](#resources)
 
-## step-0-no-security
+## step: 0
 
 let's use simple spring boot web app with `pom.xml` file:
 
@@ -59,10 +59,9 @@ with `src/main/resources/static/index.html` file:
   document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
 
   function onDOMContentLoaded() {
-    const options = {
-      method: 'GET',
-      headers: { 'Conten-Type': 'application/json' },
-    };
+    const headers = { 'Content-Type': 'application/json' };
+
+    let options = { method: 'GET', headers, };
     fetch('/api/hello', options)
       .then(response => response.json())
       .then(json => {
@@ -84,7 +83,7 @@ http :8080
 http :8080/api/hello
 ```
 
-## step-1-spring-security-defaults
+## step: 1
 
 let's use default spring-security:
 
@@ -110,7 +109,7 @@ http -a user:80427fb5-888f-4669-83c0-893ca655a82e :8080
 http -a user:80427fb5-888f-4669-83c0-893ca655a82e :8080/api/hello
 ```
 
-## step-2-simple-spring-configurer
+## step: 2
 
 create custom security config:
 
@@ -169,7 +168,120 @@ http -a max:max get :8080
 http -a daggerok:daggerok get :8080/api/hello
 ```
 
-## to be continue...
+## step: 3
+
+first, let's add required dependencies:
+
+```xml
+  <dependencies>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt</artifactId>
+    </dependency>
+  </dependencies>
+```
+
+### update backend
+
+implement auth rest resources:
+
+```java
+@RestController
+@RequiredArgsConstructor
+class JwtResource {
+
+  final JwtService jwtService;
+  final UserDetailsService userDetailsService;
+  final AuthenticationManager authenticationManager;
+
+  @PostMapping("/api/auth")
+  AuthenticationResponse authenticate(@RequestBody AuthenticationRequest request) {
+    var token = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+    var authentication = authenticationManager.authenticate(token);
+    var userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+    var jwtToken = jwtService.generateToken(userDetails);
+    return new AuthenticationResponse(jwtToken);
+  }
+}
+```
+
+where:
+
+_JwtService_
+
+```java
+@Service
+class JwtService {
+  String generateToken(UserDetails userDetails) {
+    /* Skipped jwt infrastructure logic... See sources for details */
+  }
+}
+```
+
+_AuthenticationManager_
+
+```java
+class MyWebSecurity extends WebSecurityConfigurerAdapter {
+  
+  @Override
+  @Bean // Requires to being able to inject AuthenticationManager bean in our AuthResource.
+  public AuthenticationManager authenticationManagerBean() throws Exception {
+    return super.authenticationManagerBean();
+  }
+
+  /**
+   * Requires to:
+   * - post authentication without CSRF protection
+   * - permit all requests for index page and /api/auth auth resource path
+   */
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.authorizeRequests()
+          .mvcMatchers(HttpMethod.GET, "/").permitAll()
+          .mvcMatchers(HttpMethod.POST, "/api/auth").permitAll()
+          .anyRequest().fullyAuthenticated()//.authenticated()//
+        .and()
+          .csrf().disable()
+        // .formLogin()
+    ;
+  }
+
+  // ...
+}
+```
+
+### update frontend
+
+```js
+  options = {
+    method: 'POST', headers,
+    body: JSON.stringify({ username: 'dag', password: 'dag' }),
+  };
+
+  fetch('/api/auth', options)
+    .catch(errorHandler)
+    .then(response => response.json())
+    .then(json => {
+      console.log('auth json', json);
+      const result = JSON.stringify(json);
+      const textNode = document.createTextNode(result);
+      document.querySelector('#app').prepend(textNode);
+    })
+  ;
+
+  function errorHandler(reason) {
+    console.log('oops...', reason)
+  }
+```
+
+### test
+
+with that, open http://127.0.0.1:8080 page, or use username and password, which must be the same and must contain
+`max` or `dag` words in your _AuthenticationRequest_:
+
+```bash
+http post :8080/api/auth username=dag password=dag
+```
 
 ## versioning and releasing
 

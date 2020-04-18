@@ -136,3 +136,41 @@ jobs:
     - run: wait-port 8080
     - run: http -a max:max get :8080
     - run: http -a daggerok:daggerok get :8080/api/hello
+  step-3-jwt-integration:
+    strategy:
+      matrix:
+        java: [11,14]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    name: java-${{ matrix.java }} step-3-jwt-integration
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/cache@v1
+      with:
+        path: ~/.node
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - run: npm i -g wait-port
+    - run: sudo apt-get install -yqq httpie
+    - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-3-jwt-integration
+    - run: bash $GITHUB_WORKSPACE/step-3-jwt-integration/target/*jar &
+    - run: wait-port 8080
+    - run: http get :8080
+    - run: http --ignore-stdin post :8080/api/auth username=max password=max

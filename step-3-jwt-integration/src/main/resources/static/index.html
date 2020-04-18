@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>JWT</title>
+</head>
+<body>
+<h1>Hello</h1>
+<ul id="app"></ul>
+<script>
+  document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
+
+  function errorHandler(reason) {
+    console.log('oops...', reason)
+  }
+
+  function onDOMContentLoaded() {
+    const headers = { 'Content-Type': 'application/json' };
+
+    let options = { method: 'GET', headers, };
+    fetch('/api/hello', options)
+      .catch(errorHandler)
+      .then(response => response.json())
+      .then(json => {
+        console.log('hello json', json);
+        // if (json.status && json.status >= 400) return;
+        const result = JSON.stringify(json);
+        const textNode = document.createTextNode(result);
+        document.querySelector('#app').prepend(textNode);
+      })
+    ;
+
+    options = {
+      method: 'POST', headers,
+      body: JSON.stringify({ username: 'max', password: 'max' }),
+    };
+    fetch('/api/auth', options)
+      .catch(errorHandler)
+      .then(response => response.json())
+      .then(json => {
+        console.log('auth json', json);
+        // if (json.status && json.status >= 400) return;
+        const result = JSON.stringify(json);
+        const textNode = document.createTextNode(result);
+        document.querySelector('#app').prepend(textNode);
+      })
+    ;
+  }
+</script>
+</body>
+</html>
