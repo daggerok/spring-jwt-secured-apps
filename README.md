@@ -3,9 +3,7 @@ From zero to JWT hero...
 
 ## Table of Content
 * [Step 0: No security](#step-0-no-security)
-* [Step 1: Spring Security defaults](#step-1-spring-security-defaults)
-* [Step 2: Using custom WebSecurityConfigurerAdapter, UserDetailsService](#step-2-simple-spring-configurer)
-* [TBD](#to-be-continue)
+* [Maven: versioning and releasing](#versioning-and-releasing)
 * [Resources and used links](#resources)
 
 ## step-0-no-security
@@ -83,92 +81,54 @@ http :8080
 http :8080/api/hello
 ```
 
-## step-1-spring-security-defaults
-
-let's use default spring-security:
-
-```xml
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-  </dependencies>
-```
-
-user has generated password (initially taken from server logs), so let's configure it in `application.properties` file:
-
-```properties
-spring.security.user.password=80427fb5-888f-4669-83c0-893ca655a82e
-```
-
-with that we can query like so:
-
-```bash
-http -a user:80427fb5-888f-4669-83c0-893ca655a82e :8080
-http -a user:80427fb5-888f-4669-83c0-893ca655a82e :8080/api/hello
-```
-
-## step-2-simple-spring-configurer
-
-create custom security config:
-
-```java
-@Configuration
-@RequiredArgsConstructor
-class MyWebSecurity extends WebSecurityConfigurerAdapter {
-
-  final MyUserDetailsService myUserDetailsService;
-
-  @Override
-  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(myUserDetailsService);
-  }
-}
-```
-
-where `UserDetailsService` implemented as follows:
-
-```java
-@Service
-@RequiredArgsConstructor
-class MyUserDetailsService implements UserDetailsService {
-
-  final PasswordEncoder passwordEncoder;
-
-  @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    return Optional.ofNullable(username)
-                   .filter(u -> u.contains("max") || u.contains("dag"))
-                   .map(u -> new User(username,
-                                      passwordEncoder.encode(username),
-                                      AuthorityUtils.createAuthorityList("USER")))
-                   .orElseThrow(() -> new UsernameNotFoundException(String.format("User %s not found.", username)));
-  }
-}
-```
-
-also, we need `PasswordEncoder` in context:
-
-```java
-@Configuration
-class MyPasswordEncoderConfig {
-
-  @Bean
-  PasswordEncoder passwordEncoder() {
-    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-  }
-}
-```
-
-with that, we can use username and password, which must be the same and must contain `max` or `dag` words:
-
-```bash
-http -a max:max get :8080
-http -a daggerok:daggerok get :8080/api/hello
-```
-
 ## to be continue...
+
+## versioning and releasing
+
+increment version:
+
+```bash
+1.1.1?->1.1.2
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+```
+
+current release version:
+
+```bash
+# 1.2.3-SNAPSHOT -> 1.2.3
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.incrementalVersion}
+```
+
+next snapshot version:
+
+```bash
+# 1.2.3? -> 1.2.4-SNAPSHOT
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+```
+
+release version without maven-release-plugin (when you aren't using *-SNAPSHOT version for development):
+
+```bash
+currentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
+git tag v$currentVersion
+
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+nextVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
+
+git add . ; git commit -am "v$currentVersion release." ; git push --tags
+```
+
+release version using maven-release-plugin (when you are using *-SNAPSHOT version for development):
+
+```bash
+releaseVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+developmentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=$releaseVersion
+./mvnw clean release:prepare release:perform \
+    -DreleaseVersion=$releaseVersion -DdevelopmentVersion=$developmentVersion \
+    -B -DgenerateBackupPoms=false
+```
 
 ## resources
 

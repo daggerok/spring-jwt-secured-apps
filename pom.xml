@@ -3,21 +3,50 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+  <developers>
+    <developer>
+      <name>Maksim Kostromin</name>
+      <email>daggerok@gmail.com</email>
+      <organization>Sets of open source Maksim Kostromin aka daggerok projects</organization>
+      <organizationUrl>https://github.com/daggerok/</organizationUrl>
+    </developer>
+  </developers>
+
+  <organization>
+    <name>Maksim Kostromin aka daggerok open source projects sets</name>
+    <url>https://github.com/daggerok/</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://github.com/daggerok/spring-jwt-secured-apps/blob/master/LICENSE</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <developerConnection>scm:git:git@github.com:daggerok/spring-jwt-secured-apps.git</developerConnection>
+    <connection>scm:git:https://github.com/daggerok/spring-jwt-secured-apps.git</connection>
+    <url>https://github.com/daggerok/spring-jwt-secured-apps.git</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <groupId>daggerok</groupId>
   <artifactId>spring-jwt-secured-apps</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <name>${project.artifactId}</name>
+  <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
+  <version>1.0.0</version>
 
   <modules>
     <module>step-0-no-security</module>
-    <module>step-1-spring-security-defaults</module>
-    <module>step-2-simple-spring-configurer</module>
   </modules>
 
   <properties>
     <encoding>UTF-8</encoding>
     <java.version>11</java.version>
+    <jjwt.version>0.9.1</jjwt.version>
+    <jaxb.version>2.3.1</jaxb.version>
     <spring-boot.version>2.3.0.M4</spring-boot.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
