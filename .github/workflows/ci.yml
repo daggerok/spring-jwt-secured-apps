@@ -1,0 +1,138 @@
+name: CI
+on: [push]
+env:
+  CI: 'true'
+jobs:
+  tests:
+    strategy:
+      matrix:
+        java: [11,14]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    name: java-${{ matrix.java }} tests
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - run: cd $GITHUB_WORKSPACE && ./mvnw
+  step-0-no-security:
+    strategy:
+      matrix:
+        java: [11,14]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    name: java-${{ matrix.java }} step-0-no-security
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/cache@v1
+      with:
+        path: ~/.node
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - run: npm i -g wait-port
+    - run: sudo apt-get install -yqq httpie
+    - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-0-no-security
+    - run: bash $GITHUB_WORKSPACE/step-0-no-security/target/*jar &
+    - run: wait-port 8080
+    - run: http get :8080
+    - run: http get :8080/api/hello
+  step-1-spring-security-defaults:
+    strategy:
+      matrix:
+        java: [11,14]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    name: java-${{ matrix.java }} step-1-spring-security-defaults
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/cache@v1
+      with:
+        path: ~/.node
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - run: npm i -g wait-port
+    - run: sudo apt-get install -yqq httpie
+    - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-1-spring-security-defaults
+    - run: bash $GITHUB_WORKSPACE/step-1-spring-security-defaults/target/*jar &
+    - run: wait-port 8080
+    - run: http -a user:80427fb5-888f-4669-83c0-893ca655a82e get :8080
+    - run: http -a user:80427fb5-888f-4669-83c0-893ca655a82e get :8080/api/hello
+  step-2-simple-spring-configurer:
+    strategy:
+      matrix:
+        java: [11,14]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    name: java-${{ matrix.java }} step-2-simple-spring-configurer
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/cache@v1
+      with:
+        path: ~/.node
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - run: npm i -g wait-port
+    - run: sudo apt-get install -yqq httpie
+    - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-2-simple-spring-configurer
+    - run: bash $GITHUB_WORKSPACE/step-2-simple-spring-configurer/target/*jar &
+    - run: wait-port 8080
+    - run: http -a max:max get :8080
+    - run: http -a daggerok:daggerok get :8080/api/hello

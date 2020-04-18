@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>JWT</title>
+</head>
+<body>
+<h1>Hello</h1>
+<ul id="app"></ul>
+<script>
+  document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
+
+  function onDOMContentLoaded() {
+    const options = {
+      method: 'GET',
+      headers: { 'Conten-Type': 'application/json' },
+    };
+    fetch('/api/hello', options)
+      .then(response => response.json())
+      .then(json => {
+        console.log('json', json);
+        const textNode = document.createTextNode(JSON.stringify(json));
+        document.querySelector('#app').prepend(textNode);
+      })
+    ;
+  }
+</script>
+</body>
+</html>
