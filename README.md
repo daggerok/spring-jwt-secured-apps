@@ -6,7 +6,8 @@ From zero to JWT hero...
 * [Step 1: Spring Security defaults](#step-1)
 * [Step 2: Using custom WebSecurityConfigurerAdapter, UserDetailsService](#step-2)
 * [Step 3: Simple JWT integration](#step-3)
-* [Maven: versioning and releasing](#versioning-and-releasing)
+* [Step 4: Teach Spring auth with JWT from request headers](#step-4)
+* [Versioning and releasing](#maven)
 * [Resources and used links](#resources)
 
 ## step: 0
@@ -270,7 +271,7 @@ class MyWebSecurity extends WebSecurityConfigurerAdapter {
   ;
 
   function errorHandler(reason) {
-    console.log('oops...', reason)
+    console.log(reason);
   }
 ```
 
@@ -283,7 +284,109 @@ with that, open http://127.0.0.1:8080 page, or use username and password, which 
 http post :8080/api/auth username=dag password=dag
 ```
 
-## versioning and releasing
+## step: 4
+
+let's now implement request filter interceptor, which is going to
+parse authorization header for Bearer token and authorizing spring
+security context accordingly to its validity:
+
+_JwtRequestFilter_
+
+```java
+@Component
+@RequiredArgsConstructor
+class JwtRequestFilter extends OncePerRequestFilter {
+
+  final JwtService jwtService;
+  final UserDetailsService userDetailsService;
+
+  @Override
+  protected void doFilterInternal(HttpServletRequest httpServletRequest,
+                                  HttpServletResponse httpServletResponse,
+                                  FilterChain filterChain) throws ServletException, IOException {
+
+    var prefix = "Bearer ";
+    var authorizationHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
+
+    Optional.ofNullable(authorizationHeader).ifPresent(ah -> {
+
+      var parts = ah.split(prefix);
+      if (parts.length < 2) return;
+
+      var accessToken = parts[1].trim();
+      Optional.of(accessToken). filter(Predicate.not(String::isBlank)).ifPresent(at -> {
+
+        if (jwtService.isTokenExpire(at)) return;
+
+        var username = jwtService.extractUsername(at);
+        var userDetails = userDetailsService.loadUserByUsername(username);
+        if (!jwtService.validateToken(at, userDetails)) return;
+
+        var authentication = new UsernamePasswordAuthenticationToken(username, null, userDetails.getAuthorities());
+        var details = new WebAuthenticationDetailsSource().buildDetails(httpServletRequest);
+
+        authentication.setDetails(details);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+      });
+    });
+
+    filterChain.doFilter(httpServletRequest, httpServletResponse);
+  }
+}
+```
+
+finally, update fronted to leverage localStorage as
+accessToken store:
+
+```js
+function headersWithAuth() {
+  const accessToken = localStorage.getItem('accessToken');
+  return !accessToken ? headers : Object.assign({}, headers,
+    { Authorization: 'Bearer ' + accessToken });
+}
+
+function auth() {
+  const options = {
+    method: 'POST', headers: headersWithAuth(),
+    body: JSON.stringify({ username: 'max', password: 'max' }),
+  };
+  fetch('/api/auth', options)
+    .then(response => response.json())
+    .then(json => {
+      if (json.accessToken) localStorage.setItem('accessToken', json.accessToken);
+    })
+  ;
+}
+
+function api() {
+  const options = { method: 'GET', headers: headersWithAuth() };
+  fetch('/api/hello', options)
+    .then(response => response.json())
+    .then(json => {
+      if (json.status && json.status >= 400) {
+        auth();
+        return;
+      }
+      const result = JSON.stringify(json);
+      const textNode = document.createTextNode(result);
+      const div = document.createElement('div');
+      div.append(textNode)
+      document.querySelector('#app').prepend(div);
+    })
+  ;
+}
+
+auth();
+setInterval(api, 1111);
+```
+
+with that, we can verify on http://127.0.0.1:8080 page
+how frontend applications is automatically doing
+authentication and accessing rest api!
+
+## maven
+
+we will be releasing after each important step! so it will be easy simply checkout needed version from git tag.
 
 increment version:
 

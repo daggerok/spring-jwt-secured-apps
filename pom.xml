@@ -11,6 +11,7 @@
     <module>step-1-spring-security-defaults</module>
     <module>step-2-simple-spring-configurer</module>
     <module>step-3-jwt-integration</module>
+    <module>step-4-teach-spring-read-auth-from-headers</module>
   </modules>
   <properties>
     <encoding>UTF-8</encoding>
@@ -20,6 +21,7 @@
     <spring-boot.version>2.3.0.M4</spring-boot.version>
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+    <vavr.version>0.10.2</vavr.version>
   </properties>
   <developers>
     <developer>
