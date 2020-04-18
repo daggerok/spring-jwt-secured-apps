@@ -103,14 +103,14 @@ next snapshot version:
 
 ```bash
 # 1.2.3? -> 1.2.4-SNAPSHOT
-./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT
 ```
 
 release version without maven-release-plugin (when you aren't using *-SNAPSHOT version for development):
 
 ```bash
 currentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
-git tag v$currentVersion
+git tag "v$currentVersion"
 
 ./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
 nextVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
@@ -121,13 +121,14 @@ git add . ; git commit -am "v$currentVersion release." ; git push --tags
 release version using maven-release-plugin (when you are using *-SNAPSHOT version for development):
 
 ```bash
-releaseVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
-./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
+currentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set \
+    -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
 developmentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
-./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=$releaseVersion
+./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DnewVersion="$currentVersion"
 ./mvnw clean release:prepare release:perform \
-    -DreleaseVersion=$releaseVersion -DdevelopmentVersion=$developmentVersion \
-    -B -DgenerateBackupPoms=false
+    -DreleaseVersion="$currentVersion" -DdevelopmentVersion="$developmentVersion" \
+    -B -DgenerateReleasePoms=false
 ```
 
 ## resources
