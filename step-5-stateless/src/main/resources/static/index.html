@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>JWT</title>
+</head>
+<body>
+<h1>Hello</h1>
+<div id="app"></div>
+<script>
+  document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
+
+  function errorHandler(reason) {
+    console.log(reason);
+    localStorage.removeItem('accessToken');
+  }
+
+  function onDOMContentLoaded() {
+    const headers = { 'Content-Type': 'application/json' };
+
+    function headersWithAuth() {
+      const accessToken = localStorage.getItem('accessToken');
+      return !accessToken ? headers : Object.assign({}, headers,
+        { Authorization: 'Bearer ' + accessToken });
+    }
+
+    function auth() {
+      const options = {
+        method: 'POST', headers: headersWithAuth(),
+        body: JSON.stringify({ username: 'max', password: 'max' }),
+      };
+      fetch('/api/auth', options)
+        .catch(errorHandler)
+        .then(response => response.json())
+        .then(json => {
+          console.log('auth json', json);
+          if (json.accessToken) {
+            localStorage.setItem('accessToken', json.accessToken);
+            const result = JSON.stringify(json);
+            const textNode = document.createTextNode(result);
+            const div = document.createElement('div');
+            div.append(textNode)
+            document.querySelector('#app').prepend(div);
+          }
+        })
+      ;
+    }
+
+    function api() {
+      const options = { method: 'GET', headers: headersWithAuth() };
+      fetch('/api/hello', options)
+        .catch(errorHandler)
+        .then(response => response.json())
+        .then(json => {
+          console.log('hello json', json);
+          if (json.status && json.status >= 400) {
+            console.log('fuk...');
+            return auth();
+          }
+          // if (json.status && json.status >= 400) return;
+          const result = JSON.stringify(json);
+          const textNode = document.createTextNode(result);
+          const div = document.createElement('div');
+          div.append(textNode)
+          document.querySelector('#app').prepend(div);
+        })
+      ;
+    }
+
+    auth();
+    setInterval(api, 1111);
+  }
+</script>
+</body>
+</html>

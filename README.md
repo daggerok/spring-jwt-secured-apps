@@ -1,5 +1,5 @@
 # spring-jwt-secured-apps [![CI](https://github.com/daggerok/spring-jwt-secured-apps/workflows/CI/badge.svg)](https://github.com/daggerok/spring-jwt-secured-apps/actions?query=workflow%3ACI)
-From zero to JWT hero...
+From zero to JWT hero in Spring Servlet applications!
 
 ## Table of Content
 * [Step 0: No security](#step-0)
@@ -7,6 +7,7 @@ From zero to JWT hero...
 * [Step 2: Using custom WebSecurityConfigurerAdapter, UserDetailsService](#step-2)
 * [Step 3: Simple JWT integration](#step-3)
 * [Step 4: Teach Spring auth with JWT from request headers](#step-4)
+* [Step 5: Make application stateless](#step-5)
 * [Versioning and releasing](#maven)
 * [Resources and used links](#resources)
 
@@ -384,6 +385,48 @@ with that, we can verify on http://127.0.0.1:8080 page
 how frontend applications is automatically doing
 authentication and accessing rest api!
 
+## step: 5
+
+just adding `JwtRequestFilter` was not enough. last
+missing peace is spring by default managing state, so
+in certain cases JWT expiration may not work completely.
+to fix that problem we should configure our spring
+security config accordingly:
+
+_MyWebSecurity_
+
+```java
+@Configuration
+@RequiredArgsConstructor
+class MyWebSecurity extends WebSecurityConfigurerAdapter {
+
+  final JwtRequestFilter jwtRequestFilter;
+
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    // @formatter:off
+    http.authorizeRequests()
+          .mvcMatchers(HttpMethod.GET, "/").permitAll()
+          .mvcMatchers(HttpMethod.POST, "/api/auth").permitAll()
+          .anyRequest().authenticated()//.fullyAuthenticated()//
+        .and()
+          .csrf().disable()
+        .sessionManagement()
+          .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        .and()
+          .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+    // @formatter:on
+    ;
+  }
+
+  // ...
+}
+```
+
+now run application and open http://127.0.0.1:8080/
+page to verify how token will expire and requested
+new one. done!
+
 ## maven
 
 we will be releasing after each important step! so it will be easy simply checkout needed version from git tag.
@@ -437,6 +480,7 @@ developmentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -
 
 ## resources
 
+* https://github.com/daggerok/spring-security-examples
 * [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
 * [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/docs/2.3.0.M4/maven-plugin/reference/html/)
 * [Create an OCI image](https://docs.spring.io/spring-boot/docs/2.3.0.M4/maven-plugin/reference/html/#build-image)

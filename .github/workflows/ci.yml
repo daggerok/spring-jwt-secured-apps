@@ -6,7 +6,7 @@ jobs:
   tests:
     strategy:
       matrix:
-        java: [11,14]
+        java: [11]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     name: java-${{ matrix.java }} tests
@@ -25,7 +25,7 @@ jobs:
   step-0-no-security:
     strategy:
       matrix:
-        java: [11,14]
+        java: [11]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     name: java-${{ matrix.java }} step-0-no-security
@@ -63,7 +63,7 @@ jobs:
   step-1-spring-security-defaults:
     strategy:
       matrix:
-        java: [11,14]
+        java: [11]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     name: java-${{ matrix.java }} step-1-spring-security-defaults
@@ -101,7 +101,7 @@ jobs:
   step-2-simple-spring-configurer:
     strategy:
       matrix:
-        java: [11,14]
+        java: [11]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     name: java-${{ matrix.java }} step-2-simple-spring-configurer
@@ -139,7 +139,7 @@ jobs:
   step-3-jwt-integration:
     strategy:
       matrix:
-        java: [11,14]
+        java: [11]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     name: java-${{ matrix.java }} step-3-jwt-integration
@@ -177,7 +177,7 @@ jobs:
   step-4-teach-spring-read-auth-from-headers:
     strategy:
       matrix:
-        java: [11,14]
+        java: [11]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     name: java-${{ matrix.java }} step-4-teach-spring-read-auth-from-headers
@@ -209,6 +209,44 @@ jobs:
     - run: sudo apt-get install -yqq httpie
     - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-4-teach-spring-read-auth-from-headers
     - run: bash $GITHUB_WORKSPACE/step-4-teach-spring-read-auth-from-headers/target/*jar &
+    - run: wait-port 8080
+    - run: http get :8080
+    - run: http --ignore-stdin post :8080/api/auth username=max password=max
+  step-5-stateless:
+    strategy:
+      matrix:
+        java: [11]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    name: java-${{ matrix.java }} step-5-stateless
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/cache@v1
+      with:
+        path: ~/.node
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/mvnw') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - run: npm i -g wait-port
+    - run: sudo apt-get install -yqq httpie
+    - run: cd $GITHUB_WORKSPACE && ./mvnw -f step-5-stateless
+    - run: bash $GITHUB_WORKSPACE/step-5-stateless/target/*jar &
     - run: wait-port 8080
     - run: http get :8080
     - run: http --ignore-stdin post :8080/api/auth username=max password=max
