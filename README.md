@@ -430,52 +430,19 @@ new one. done!
 ## maven
 
 we will be releasing after each important step! so it will be easy simply checkout needed version from git tag.
-
-increment version:
-
-```bash
-1.1.1?->1.1.2
-./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
-```
-
-current release version:
-
-```bash
-# 1.2.3-SNAPSHOT -> 1.2.3
-./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.incrementalVersion}
-```
-
-next snapshot version:
-
-```bash
-# 1.2.3? -> 1.2.4-SNAPSHOT
-./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT
-```
-
-release version without maven-release-plugin (when you aren't using *-SNAPSHOT version for development):
+release current version using maven-release-plugin (when you are using *-SNAPSHOT version for development):
 
 ```bash
 currentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
-git tag "v$currentVersion"
 
-./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DgenerateBackupPoms=false \
-  -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
-nextVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
-
-git add . ; git commit -am "v$currentVersion release." ; git push --tags
-```
-
-release version using maven-release-plugin (when you are using *-SNAPSHOT version for development):
-
-```bash
-currentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
 ./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set \
     -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
 developmentVersion=`./mvnw -q --non-recursive exec:exec -Dexec.executable=echo -Dexec.args='${project.version}'`
 ./mvnw build-helper:parse-version -DgenerateBackupPoms=false versions:set -DnewVersion="$currentVersion"
+
 ./mvnw clean release:prepare release:perform \
-    -DreleaseVersion="$currentVersion" -DdevelopmentVersion="$developmentVersion" \
-    -B -DgenerateReleasePoms=false
+    -B -DgenerateReleasePoms=false -DgenerateBackupPoms=false \
+    -DreleaseVersion="$currentVersion" -DdevelopmentVersion="$developmentVersion"
 ```
 
 ## resources
